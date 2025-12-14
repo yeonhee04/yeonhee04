@@ -1,19 +1,6 @@
-// app/(tabs)/timer.tsx
-import { useFocusEffect } from "@react-navigation/native";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-
-import {
-    clearTimer,
-    loadTimer,
-    pauseTimer,
-    resumeTimer,
-    setDuration,
-    startTimer,
-    type TimerState,
-} from "../../src/storage/timer";
-
-import { stopMixerSounds } from "../../src/services/mixerBridge";
+import { useTimer } from "../../src/context/TimerContext";
 
 const PRESETS = [
   { label: "10s", ms: 10_000 },
@@ -30,161 +17,80 @@ function formatMMSS(ms: number) {
 }
 
 export default function TimerScreen() {
-  const [timer, setTimerState] = useState<TimerState | null>(null);
-  const [now, setNow] = useState(Date.now());
-  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const refresh = useCallback(() => {
-    void (async () => {
-      const t = await loadTimer();
-      setTimerState(t);
-    })();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      refresh();
-    }, [refresh])
-  );
-
-  const remainingMs = useMemo(() => {
-    if (!timer) return 0;
-    if (timer.status === "running" && timer.endAt) return Math.max(0, timer.endAt - now);
-    return Math.max(0, timer.remainingMs);
-  }, [timer, now]);
-
-  const isRunning = timer?.status === "running";
-  const isPaused = timer?.status === "paused";
-  const isIdle = timer?.status === "idle";
-
-  // running일 때만 tick
-  useEffect(() => {
-    if (tickRef.current) clearInterval(tickRef.current);
-
-    if (isRunning) {
-      tickRef.current = setInterval(() => setNow(Date.now()), 200);
-    }
-
-    return () => {
-      if (tickRef.current) {
-        clearInterval(tickRef.current);
-        tickRef.current = null;
-      }
-    };
-  }, [isRunning]);
-
-  // ✅ 타이머 종료되면: Mixer 음원 stop + 타이머 idle 정리
-  useEffect(() => {
-    if (!timer) return;
-
-    if (timer.status === "running" && remainingMs <= 0) {
-      void (async () => {
-        await stopMixerSounds();
-        const next = await clearTimer();
-        setTimerState(next);
-      })();
-    }
-  }, [timer, remainingMs]);
+  const { remainingSeconds, isRunning, setTime, resumeTimer, pauseTimer, stopTimer } =
+    useTimer();
 
   const onSelectPreset = useCallback(
     (ms: number) => {
-      if (!timer) return;
-      if (timer.status !== "idle") return; // idle일 때만 변경
-
-      void (async () => {
-        const next = await setDuration(ms);
-        setTimerState(next);
-      })();
+      setTime(ms / 1000);
     },
-    [timer]
+    [setTime]
   );
 
-  const onStart = useCallback(() => {
-    if (!timer) return;
-
-    void (async () => {
-      if (timer.status === "paused") {
-        const next = await resumeTimer();
-        setTimerState(next);
-        return;
+  const onToggle = useCallback(() => {
+    if (isRunning) {
+      pauseTimer();
+    } else {
+      if (remainingSeconds > 0) {
+        resumeTimer();
       }
+    }
+  }, [isRunning, remainingSeconds, pauseTimer, resumeTimer]);
 
-      if (timer.status === "idle") {
-        const next = await startTimer(timer.durationMs);
-        setTimerState(next);
-        return;
-      }
-    })();
-  }, [timer]);
-
-  // ✅ Pause는 시간만 정지(음원 영향 없음)
-  const onPause = useCallback(() => {
-    if (!timer) return;
-
-    void (async () => {
-      if (timer.status === "running") {
-        const next = await pauseTimer();
-        setTimerState(next);
-      }
-    })();
-  }, [timer]);
-
-  if (!timer) return <View style={styles.root} />;
+  const onStop = useCallback(() => {
+    stopTimer();
+  }, [stopTimer]);
 
   return (
     <View style={styles.root}>
-      {/* ✅ 헤더: paddingTop/Horizontal 통일 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Sleep Timer</Text>
       </View>
 
-      {/* 중앙 영역 */}
       <View style={styles.center}>
-        <Text style={styles.time}>{formatMMSS(remainingMs)}</Text>
+        <Text style={styles.time}>{formatMMSS(remainingSeconds * 1000)}</Text>
 
         <View style={styles.actionsRow}>
           <Pressable
-            onPress={onStart}
-            style={[styles.actionBtn, styles.startBtn, isRunning && styles.disabledBtn]}
-            disabled={!!isRunning}
+            onPress={onToggle}
+            style={[styles.actionBtn, styles.startBtn]}
           >
-            <Text style={styles.startText}>{isPaused ? "RESUME" : "START"}</Text>
+            <Text style={styles.startText}>
+              {isRunning ? "PAUSE" : "START"}
+            </Text>
           </Pressable>
 
           <Pressable
-            onPress={onPause}
-            style={[styles.actionBtn, styles.pauseBtn, !isRunning && styles.disabledBtn]}
-            disabled={!isRunning}
+            onPress={onStop}
+            style={[styles.actionBtn, styles.pauseBtn]}
           >
-            <Text style={styles.pauseText}>PAUSE</Text>
+            <Text style={styles.pauseText}>STOP</Text>
           </Pressable>
         </View>
 
         <Text style={styles.caption}>
-          Pause는 시간만 멈추며, 음원 재생에는 영향을 주지 않습니다.
+          타이머가 종료되면 믹서의 모든 사운드가 꺼집니다.
         </Text>
       </View>
 
-      {/* 하단 프리셋 카드 */}
       <View style={styles.presetsCard}>
         <Text style={styles.sectionTitle}>Preset</Text>
 
         <View style={styles.pillsRow}>
           {PRESETS.map((p) => {
-            const active = timer.durationMs === p.ms;
-            const disabled = !isIdle;
+            const isSelected = remainingSeconds === p.ms / 1000;
             return (
               <Pressable
                 key={p.label}
                 onPress={() => onSelectPreset(p.ms)}
-                disabled={disabled}
-                style={[
-                  styles.pill,
-                  active && styles.pillActive,
-                  disabled && styles.pillDisabled,
-                ]}
+                style={[styles.pill, isSelected && styles.pillActive]}
               >
-                <Text style={[styles.pillText, active && styles.pillTextActive]}>
+                <Text
+                  style={[
+                    styles.pillText,
+                    isSelected && styles.pillTextActive,
+                  ]}
+                >
                   {p.label}
                 </Text>
               </Pressable>
@@ -193,7 +99,7 @@ export default function TimerScreen() {
         </View>
 
         <Text style={styles.help}>
-          Timer가 끝나면 Mixer의 모든 사운드가 자동으로 정지됩니다.
+          시간을 선택한 후 START 버튼을 눌러주세요.
         </Text>
       </View>
     </View>
@@ -205,9 +111,13 @@ const NAVY = "#0f2d4a";
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: NAVY },
 
-  // ✅ 여기서 paddingTop이 적용됩니다
   header: { paddingTop: 56, paddingBottom: 14, paddingHorizontal: 18 },
-  headerTitle: { fontSize: 34, fontWeight: "900", color: "white", lineHeight: 40 },
+  headerTitle: {
+    fontSize: 34,
+    fontWeight: "900",
+    color: "white",
+    lineHeight: 40,
+  },
 
   center: {
     flex: 1,
@@ -234,8 +144,6 @@ const styles = StyleSheet.create({
   pauseBtn: { backgroundColor: "rgba(255,255,255,0.15)" },
   pauseText: { color: "white", fontWeight: "900", letterSpacing: 1 },
 
-  disabledBtn: { opacity: 0.35 },
-
   caption: {
     marginTop: 12,
     color: "rgba(255,255,255,0.75)",
@@ -252,7 +160,12 @@ const styles = StyleSheet.create({
     padding: 14,
   },
 
-  sectionTitle: { fontSize: 16, fontWeight: "900", color: "#0b2034", marginBottom: 10 },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "900",
+    color: "#0b2034",
+    marginBottom: 10,
+  },
 
   pillsRow: { flexDirection: "row", gap: 10, justifyContent: "space-between" },
 
@@ -265,7 +178,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(11,32,52,0.08)",
   },
   pillActive: { backgroundColor: "#0b2034" },
-  pillDisabled: { opacity: 0.5 },
 
   pillText: { color: "#0b2034", fontWeight: "900", fontSize: 18 },
   pillTextActive: { color: "white" },

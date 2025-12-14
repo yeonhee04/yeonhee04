@@ -1,4 +1,3 @@
-import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import {
@@ -11,14 +10,7 @@ import {
   View,
 } from "react-native";
 
-import {
-  deletePreset,
-  loadPresets,
-  setPendingPreset,
-  type Preset,
-} from "../../src/storage/presets";
-
-// ⚠️ 파일명이 src/data/sound.ts라면 "../../src/data/sound" 로 변경
+import { usePreset, type Preset } from "../../src/context/PresetContext"; // [변경]
 import { SOUND_LIST } from "../../src/data/sound";
 
 type SortMode = "recent" | "name" | "sounds";
@@ -34,27 +26,18 @@ function sortLabel(mode: SortMode) {
 }
 
 export default function PresetsScreen() {
-  const [presets, setPresets] = useState<Preset[]>([]);
+  // ✅ [변경] Context에서 데이터와 함수 가져오기
+  const { presets, deletePreset, applyPreset } = usePreset();
+
   const [query, setQuery] = useState("");
   const [sortMode, setSortMode] = useState<SortMode>("recent");
 
-  const refresh = useCallback(() => {
-    void (async () => {
-      const list = await loadPresets();
-      setPresets(list);
-    })();
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      refresh();
-    }, [refresh])
-  );
+  // ⚠️ [삭제] loadPresets, refresh, useFocusEffect 모두 삭제됨!
 
   const visiblePresets = useMemo(() => {
     const q = query.trim().toLowerCase();
+    let list = presets; // Context의 presets 사용
 
-    let list = presets;
     if (q.length > 0) {
       list = list.filter((p) => p.name.toLowerCase().includes(q));
     }
@@ -62,13 +45,11 @@ export default function PresetsScreen() {
     if (sortMode === "recent") return list;
 
     const copy = [...list];
-
     if (sortMode === "name") {
       copy.sort((a, b) => a.name.localeCompare(b.name, "ko"));
       return copy;
     }
-
-    // sounds
+    // sounds count sort
     copy.sort((a, b) => {
       const diff = b.items.length - a.items.length;
       if (diff !== 0) return diff;
@@ -85,10 +66,14 @@ export default function PresetsScreen() {
     });
   }, []);
 
-  const onApply = useCallback(async (preset: Preset) => {
-    await setPendingPreset(preset);
-    router.navigate("/mixer");
-  }, []);
+  const onApply = useCallback(
+    (preset: Preset) => {
+      // ✅ [변경] Context 함수 사용 -> 저장소 안 거치고 메모리로 전달 (빠름)
+      applyPreset(preset);
+      router.navigate("/mixer");
+    },
+    [applyPreset]
+  );
 
   const onDelete = useCallback(
     (preset: Preset) => {
@@ -97,16 +82,12 @@ export default function PresetsScreen() {
         {
           text: "삭제",
           style: "destructive",
-          onPress: () => {
-            void (async () => {
-              await deletePreset(preset.id);
-              refresh();
-            })();
-          },
+          // ✅ [변경] Context 함수 호출 (자동으로 화면 갱신됨)
+          onPress: () => void deletePreset(preset.id),
         },
       ]);
     },
-    [refresh]
+    [deletePreset]
   );
 
   const renderItem = useCallback(
@@ -114,13 +95,11 @@ export default function PresetsScreen() {
       const chipLabels = item.items.map((x) => getSoundTitle(x.soundId));
 
       return (
-        <Pressable onPress={() => void onApply(item)} style={styles.card}>
-          {/* ✅ 상단 Row: 이름 + Delete */}
+        <Pressable onPress={() => onApply(item)} style={styles.card}>
           <View style={styles.cardTopRow}>
             <Text style={styles.cardTitle} numberOfLines={1}>
               {item.name}
             </Text>
-
             <Pressable
               onPress={() => onDelete(item)}
               style={styles.deleteTextBtn}
@@ -130,7 +109,6 @@ export default function PresetsScreen() {
             </Pressable>
           </View>
 
-          {/* ✅ 하단 Row: 칩 */}
           <View style={styles.chipsWrap}>
             {chipLabels.map((label, idx) => (
               <View key={`${item.id}-${idx}-${label}`} style={styles.chip}>
@@ -152,7 +130,6 @@ export default function PresetsScreen() {
         <Text style={styles.title}>Saved Mixes</Text>
         <Text style={styles.subTitle}>탭하면 Mixer에 적용됩니다</Text>
 
-        {/* ✅ 간격 추가: subTitle 아래 여백 + controlsRow는 바로 붙임 */}
         <View style={styles.controlsRow}>
           <View style={styles.searchBox}>
             <TextInput
@@ -166,7 +143,6 @@ export default function PresetsScreen() {
               clearButtonMode="while-editing"
             />
           </View>
-
           <Pressable onPress={cycleSort} style={styles.sortBtn}>
             <Text style={styles.sortText}>{sortLabel(sortMode)}</Text>
           </Pressable>
