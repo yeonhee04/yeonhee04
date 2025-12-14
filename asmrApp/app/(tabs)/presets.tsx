@@ -9,66 +9,52 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
-import { usePreset, type Preset } from "../../src/context/PresetContext"; // [변경]
+// ✅ Context 및 데이터
+import { usePreset, type Preset } from "../../src/context/PresetContext";
 import { SOUND_LIST } from "../../src/data/sound";
 
-type SortMode = "recent" | "name" | "sounds";
-
+// 사운드 ID -> 제목 변환 (예: rain -> Rain)
 function getSoundTitle(soundId: string) {
   return SOUND_LIST.find((s) => s.id === soundId)?.title ?? soundId;
 }
 
-function sortLabel(mode: SortMode) {
-  if (mode === "recent") return "Recent";
-  if (mode === "name") return "Name";
-  return "Sounds";
-}
-
 export default function PresetsScreen() {
-  // ✅ [변경] Context에서 데이터와 함수 가져오기
   const { presets, deletePreset, applyPreset } = usePreset();
-
+  
+  // ✅ 검색어 상태 관리
   const [query, setQuery] = useState("");
-  const [sortMode, setSortMode] = useState<SortMode>("recent");
 
-  // ⚠️ [삭제] loadPresets, refresh, useFocusEffect 모두 삭제됨!
-
+// ✅ 검색 필터링 + 자동 정렬 (이름순)
   const visiblePresets = useMemo(() => {
     const q = query.trim().toLowerCase();
-    let list = presets; // Context의 presets 사용
+    let list = presets;
 
+    // 1. 검색 (Search)
     if (q.length > 0) {
-      list = list.filter((p) => p.name.toLowerCase().includes(q));
+      list = list.filter((p) => {
+        // (1) 프리셋 이름에서 찾기
+        const matchName = p.name.toLowerCase().includes(q);
+        
+        // (2) 포함된 소리 이름(Tag)에서 찾기
+        // p.items 배열을 하나씩 돌면서(some), 소리 제목에 검색어가 있는지 확인
+        const matchSound = p.items.some((item) => {
+          const soundTitle = getSoundTitle(item.soundId).toLowerCase();
+          return soundTitle.includes(q);
+        });
+
+        // 둘 중 하나라도 맞으면 통과 (OR 조건)
+        return matchName || matchSound;
+      });
     }
 
-    if (sortMode === "recent") return list;
-
-    const copy = [...list];
-    if (sortMode === "name") {
-      copy.sort((a, b) => a.name.localeCompare(b.name, "ko"));
-      return copy;
-    }
-    // sounds count sort
-    copy.sort((a, b) => {
-      const diff = b.items.length - a.items.length;
-      if (diff !== 0) return diff;
-      return a.name.localeCompare(b.name, "ko");
-    });
-    return copy;
-  }, [presets, query, sortMode]);
-
-  const cycleSort = useCallback(() => {
-    setSortMode((prev) => {
-      if (prev === "recent") return "name";
-      if (prev === "name") return "sounds";
-      return "recent";
-    });
-  }, []);
+    // 2. 자동 정렬 (Sort): 가나다순
+    return [...list].sort((a, b) => a.name.localeCompare(b.name, "ko"));
+  }, [presets, query]);
 
   const onApply = useCallback(
     (preset: Preset) => {
-      // ✅ [변경] Context 함수 사용 -> 저장소 안 거치고 메모리로 전달 (빠름)
       applyPreset(preset);
       router.navigate("/mixer");
     },
@@ -82,7 +68,6 @@ export default function PresetsScreen() {
         {
           text: "삭제",
           style: "destructive",
-          // ✅ [변경] Context 함수 호출 (자동으로 화면 갱신됨)
           onPress: () => void deletePreset(preset.id),
         },
       ]);
@@ -96,6 +81,7 @@ export default function PresetsScreen() {
 
       return (
         <Pressable onPress={() => onApply(item)} style={styles.card}>
+          {/* 카드 윗부분: 제목 + 삭제 버튼 */}
           <View style={styles.cardTopRow}>
             <Text style={styles.cardTitle} numberOfLines={1}>
               {item.name}
@@ -109,6 +95,7 @@ export default function PresetsScreen() {
             </Pressable>
           </View>
 
+          {/* ✅ [복구] 기존 칩(Chip) 디자인 적용 */}
           <View style={styles.chipsWrap}>
             {chipLabels.map((label, idx) => (
               <View key={`${item.id}-${idx}-${label}`} style={styles.chip}>
@@ -130,8 +117,9 @@ export default function PresetsScreen() {
         <Text style={styles.title}>Saved Mixes</Text>
         <Text style={styles.subTitle}>탭하면 Mixer에 적용됩니다</Text>
 
-        <View style={styles.controlsRow}>
-          <View style={styles.searchBox}>
+        {/* ✅ 검색창 (정렬 버튼 제거하고 검색창을 넓게 사용) */}
+        <View style={styles.searchBox}>
+           <Ionicons name="search" size={20} color="rgba(255,255,255,0.6)" style={{marginRight: 8}}/>
             <TextInput
               value={query}
               onChangeText={setQuery}
@@ -142,10 +130,6 @@ export default function PresetsScreen() {
               autoCorrect={false}
               clearButtonMode="while-editing"
             />
-          </View>
-          <Pressable onPress={cycleSort} style={styles.sortBtn}>
-            <Text style={styles.sortText}>{sortLabel(sortMode)}</Text>
-          </Pressable>
         </View>
       </View>
 
@@ -171,41 +155,31 @@ const NAVY = "#0f2d4a";
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: NAVY },
 
-  header: { paddingTop: 56, paddingBottom: 14, paddingHorizontal: 18 },
+  header: { paddingTop: 56, paddingBottom: 14, paddingHorizontal: 18 }, // 헤더 높이 살짝 조정
   title: { fontSize: 34, color: "white", fontWeight: "900", lineHeight: 40 },
   subTitle: {
     fontSize: 14,
     color: "rgba(255,255,255,0.75)",
     marginTop: 6,
-    marginBottom: 16, // ✅ 검색창과 간격
+    marginBottom: 16,
     fontWeight: "600",
   },
 
-  controlsRow: { flexDirection: "row", gap: 10 },
+  // ✅ 검색창 스타일 (정렬 버튼 공간까지 차지하도록 flex: 1 유지하되 width 100% 느낌으로)
   searchBox: {
-    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     height: 44,
     borderRadius: 14,
     backgroundColor: "rgba(255,255,255,0.14)",
     paddingHorizontal: 12,
-    justifyContent: "center",
   },
-  searchInput: { color: "white", fontWeight: "700" },
-
-  sortBtn: {
-    width: 92,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.95)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  sortText: { color: "#0b2034", fontWeight: "900" },
+  searchInput: { flex: 1, color: "white", fontWeight: "700", fontSize: 16 },
 
   list: { padding: 16, gap: 12 },
-  empty: { color: "rgba(255,255,255,0.75)", paddingTop: 30 },
+  empty: { color: "rgba(255,255,255,0.75)", paddingTop: 30, textAlign: 'center' },
 
-  // ✅ 카드: 2단 구조 + border
+  // ✅ 카드 스타일 (기존 디자인 복구)
   card: {
     backgroundColor: "rgba(255,255,255,0.95)",
     borderRadius: 20,
@@ -228,7 +202,6 @@ const styles = StyleSheet.create({
     color: "#0b2034",
   },
 
-  // ✅ Delete 버튼을 “가벼운 텍스트 버튼”으로
   deleteTextBtn: {
     paddingHorizontal: 8,
     paddingVertical: 6,
@@ -239,8 +212,10 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#0b2034",
     opacity: 0.75,
+    fontSize: 12,
   },
 
+  // ✅ 칩(Chip) 스타일 (기존 디자인 복구)
   chipsWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 10 },
   chip: {
     paddingHorizontal: 10,
