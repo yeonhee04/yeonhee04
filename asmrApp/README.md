@@ -55,6 +55,7 @@ npm install
 
 # 3. Run Project
 npx expo start
+```
 
 <img width="1280" height="764" alt="TuneMyMood-1" src="https://github.com/user-attachments/assets/511ed3b1-9aa2-4df5-848d-7d5f672fdd41" />
 <img width="1280" height="764" alt="TuneMyMood-2" src="https://github.com/user-attachments/assets/0e6c7851-c1cb-42b3-a2d0-37b769839c80" />
