@@ -58,7 +58,7 @@ npx expo start
 ```
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/511ed3b1-9aa2-4df5-848d-7d5f672fdd41" width="32%"/>
+  <img src="https://github.com/user-attachments/assets/e9c64541-180a-4d86-9405-9eb88a8159f4" width="32%"/>
   <img src="https://github.com/user-attachments/assets/c6f74592-d522-428c-b3f1-06b3527f4a34" width="32%"/>
   <img src="https://github.com/user-attachments/assets/40ff537d-030f-4abd-b03a-026721ed3f03" width="32%"/>
 </div>
