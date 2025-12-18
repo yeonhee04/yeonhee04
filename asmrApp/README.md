@@ -57,7 +57,9 @@ npm install
 npx expo start
 ```
 
-<img width="1280" height="764" alt="TuneMyMood-1" src="https://github.com/user-attachments/assets/511ed3b1-9aa2-4df5-848d-7d5f672fdd41" />
-<img width="1280" height="764" alt="TuneMyMood-2" src="https://github.com/user-attachments/assets/0e6c7851-c1cb-42b3-a2d0-37b769839c80" />
-<img width="1280" height="764" alt="TuneMyMood-3" src="https://github.com/user-attachments/assets/1a3999ec-c015-415e-ba8e-393e5a2cbd36" />
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/511ed3b1-9aa2-4df5-848d-7d5f672fdd41" width="32%"/>
+  <img src="https://github.com/user-attachments/assets/c6f74592-d522-428c-b3f1-06b3527f4a34" width="32%"/>
+  <img src="https://github.com/user-attachments/assets/40ff537d-030f-4abd-b03a-026721ed3f03" width="32%"/>
+</div>
 
