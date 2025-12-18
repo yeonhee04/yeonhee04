@@ -19,3 +19,7 @@
     백엔드 서버 없이 사용자의 일기 데이터와 커스텀 음악 리스트를 유지하기 위해 `localStorage`를 적극 활용했습니다. 새로고침 후에도 데이터가 유실되지 않도록 구현하며 웹 스토리지의 동작 원리를 이해했습니다.
 * UX를 고려한 음악 재생:
     일기를 쓰는 도중 페이지가 이동되면 음악이 끊기는 문제를 해결하기 위해, 음악 플레이어를 새 창(Pop-up)으로 띄워 지속적인 청취 경험을 제공했습니다.
+
+  <img width="1280" height="764" alt="TuneMyMood-1" src="https://github.com/user-attachments/assets/898860a8-cce8-472c-a3c4-f85d948ee49c" />
+<img width="1280" height="764" alt="TuneMyMood-2" src="https://github.com/user-attachments/assets/dd655e91-c0a4-4c36-a31e-d9b45e17380b" />
+<img width="1280" height="764" alt="TuneMyMood-3" src="https://github.com/user-attachments/assets/dfb2d745-f686-4222-8788-45b517735b92" />
