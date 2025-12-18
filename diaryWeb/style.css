@@ -1,0 +1,401 @@
+/*----------------------------------------------
+  [1] 전체 페이지 레이아웃 및 배경
+----------------------------------------------*/
+
+/* body: 사이트 전체 배경, 폰트, 기본색 등 설정 */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Noto Sans KR', Arial, sans-serif;
+  background: #f8fafc;      /* 밝고 편안한 톤의 기본 배경색 */
+  color: #222;              /* 본문 기본 글자색 */
+  min-height: 100vh;        /* 화면이 짧아도 배경이 꽉 차도록 */
+  transition: background 0.2s; /* 감정별 테마색 전환 애니메이션 */
+}
+
+/*----------------------------------------------
+  [2] 상단 헤더(웹사이트 제목) 영역
+----------------------------------------------*/
+
+/* header: 상단 바, 배경/글자색 고정 */
+header {
+  display: flex; 
+  align-items: center;
+  background: #333;
+  color: #fff;
+  padding: 20px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+}
+
+/* header 안쪽 제목 꾸미기 */
+header h1 {
+  font-size: 2rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* header 내 로고(이모지) 스타일 */
+header .logo {
+  font-size: 2rem;
+  margin-right: 12px;
+}
+
+/*----------------------------------------------
+  [3] section(카드) 레이아웃 및 스타일
+----------------------------------------------*/
+
+/* section: 각 주요 영역(감정/음악/일기/통계) 카드처럼 */
+section {
+  max-width: 700px;             /* 넓이 제한 */
+  margin: 32px auto 32px auto;  /* 위아래/가운데 정렬 */
+  padding: 32px 28px 32px 28px; /* 내부 여백 충분히 */
+  background: #fff;             /* 항상 하얀색 배경(테마색 영향X) */
+  border-radius: 24px;          /* 카드 둥글게 */
+  box-shadow: 0 6px 32px rgba(0,0,0,0.11); /* 카드 그림자 */
+  position: relative;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+/* section 제목 스타일 */
+section h2 {
+  margin-top: 0;
+  color: #333;
+  font-size: 1.4rem;
+  letter-spacing: -0.5px;
+}
+
+/*----------------------------------------------
+  [4] 감정 선택 버튼(이모지) UI
+----------------------------------------------*/
+
+/* 감정 버튼들을 담는 영역: 가로 정렬, 버튼간 간격 */
+#emotion-btns {
+  display: flex;
+  gap: 18px;
+  margin: 16px 0;
+}
+
+/* 감정 버튼 기본 모양: 둥글고, 흰색에 회색 테두리 */
+.emotion-btn {
+  font-size: 1.1rem;
+  padding: 10px 20px;
+  border-radius: 30px;
+  border: none;
+  background: #ececec;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s, color 0.2s;
+  font-weight: 500;
+  outline: none;
+  color: #333;
+  box-shadow: none;
+}
+
+/* 감정별로 클릭(선택)된 버튼의 고유색상 및 효과 부여 */
+.emotion-btn.active[data-emotion="happy"] {
+  background: #FFD166;
+  color: #ad7a00;
+  box-shadow: 0 2px 10px rgba(255,210,77,0.17);
+  transform: scale(1.07);
+}
+.emotion-btn.active[data-emotion="calm"] {
+  background: #06D6A0;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(6,214,160,0.13);
+  transform: scale(1.07);
+}
+.emotion-btn.active[data-emotion="sad"] {
+  background: #118AB2;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(17,138,178,0.14);
+  transform: scale(1.07);
+}
+.emotion-btn.active[data-emotion="angry"] {
+  background: #EF476F;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(239,71,111,0.13);
+  transform: scale(1.07);
+}
+
+/* 감정 위로 문구(격려) 영역: 폰트/색상 강조 */
+.encouragement {
+  margin-top: 10px;
+  padding: 10px 0 4px 0;
+  font-size: 1.05rem;
+  color: #355c7d;
+  font-weight: bold;
+}
+
+/* 감정 태그(일기 작성폼 내 감정 표시) */
+.tag {
+  display: inline-block;
+  padding: 2px 12px;
+  margin-left: 8px;
+  border-radius: 20px;
+  font-size: 1rem;
+  font-weight: 500;
+  background: #eaeaea;
+  color: #333;
+  vertical-align: middle;
+}
+
+/* 감정별 태그의 배경색/글자색 */
+.tag-happy  { background: #FFE066; color: #ad7a00; }
+.tag-calm   { background: #C7F9CC; color: #116530; }
+.tag-sad    { background: #A9DEF9; color: #24527a; }
+.tag-angry  { background: #FFB3C6; color: #9d0021; }
+
+/*----------------------------------------------
+  [5] 음악 카드(추천/등록) 스타일
+----------------------------------------------*/
+
+/* 음악 리스트: 가로 플렉스 배열, 카드 간 간격 */
+.music-list {
+  display: flex;
+  flex-wrap: wrap; /* 음악 카드가 너무 많으면 아래로 자동 줄바꿈 */
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+/* 음악 카드(개별): 흰색, 둥글고, 그림자 효과 */
+.card {
+  background: #f7f7ff;
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  padding: 16px;
+  width: 180px;
+  display: flex;
+  flex-direction: column; /* 내부 요소를 위→아래(세로)로 쌓음 */
+  align-items: flex-start; /* 내부 요소들을 카드왼쪽에 맞춤 (왼쪽정렬) */
+  justify-content: space-between; /* 카드 안 세로 공간 분배 */
+}
+
+/* 카드 내 곡 정보 영역 */
+.card .info {
+  margin-bottom: 12px;
+}
+
+/* 곡 제목 강조 */
+.card strong {
+  display: block;
+  font-size: 1.08rem;
+  margin-bottom: 3px;
+  color: #3a3a3a;
+}
+
+/* 아티스트/유저곡 표시 */
+.card span {
+  font-size: 0.98rem;
+  color: #888;
+}
+
+/* 듣기 버튼 디자인 */
+.card .play-btn {
+  align-self: flex-end;
+  background: #60a5fa;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 4px 14px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: background 0.2s;
+}
+.card .play-btn:hover {
+  background: #2563eb;
+}
+
+/* 사용자 음악 목록(리스트) 스타일 */
+.user-music-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.user-music-list li {
+  margin: 6px 0;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: #f0f0f6;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.98rem;
+}
+
+/* 음악 삭제(X) 버튼 */
+.user-music-list button {
+  background: #fd7676;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 2px 9px;
+  cursor: pointer;
+  font-size: 0.95rem;
+  margin-left: 12px;
+  transition: background 0.15s;
+}
+.user-music-list button:hover {
+  background: #b70016;
+}
+
+/*----------------------------------------------
+  [6] 일기 작성 폼과 입력창
+----------------------------------------------*/
+
+/* 일기 작성 폼 전체: 여백/그림자/정렬 */
+#entry-form {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  margin-bottom: 18px;
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 14px 10px 16px 10px;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.02);
+}
+
+/* 날짜 라벨/입력란 */
+#entry-form label {
+  font-size: 1.03rem;
+  margin-right: 12px;
+}
+
+/* 날짜 입력란: 둥글고 회색 */
+#entry-date {
+  background: #ececec;
+  border: none;
+  border-radius: 7px;
+  padding: 3px 10px;
+  font-size: 1rem;
+  width: 120px;
+}
+
+/* 일기 메모 textarea */
+#entry-form textarea {
+  width: 350px;
+  height: 60px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  padding: 7px;
+  resize: vertical;
+  font-size: 1rem;
+  background: #f7f7ff;
+  margin-right: 6px;
+}
+
+/* 일기 저장 버튼 */
+#entry-form button {
+  background: #81c784;
+  color: #fff;
+  border: none;
+  border-radius: 18px;
+  padding: 7px 20px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: background 0.18s;
+}
+#entry-form button:hover {
+  background: #388e3c;
+}
+
+/*----------------------------------------------
+  [7] 달력 영역(월, 표, 감정별 색상)
+----------------------------------------------*/
+
+/* 달력 전체 영역 */
+.calendar-area {
+  margin-top: 24px;
+}
+
+/* 달 상단의 년/월 표기 */
+.month-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 7px;
+  color: #333;
+}
+
+/* 달력 자체의 레이아웃(가로 넘침 방지) */
+#calendar {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* 달력 표: 둥글고 그림자 있는 카드 */
+#calendar table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #f7fafc;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  margin-bottom: 8px;
+}
+
+/* 달력 셀/헤더: 가운데 정렬, 여백, 글씨 크기 */
+#calendar th, #calendar td {
+  width: 14%;
+  text-align: center;
+  padding: 9px 0;
+  font-size: 1.05rem;
+  border: none;
+}
+
+/* 달력 요일 헤더(일~토): 색상 강조 */
+#calendar th {
+  color: #388e3c;
+  font-weight: 600;
+  background: #e3f2fd;
+  border-radius: 0;
+}
+
+/* 달력 날짜 셀: 기본 흰색, 마우스 올리면 파란색 */
+#calendar td {
+  cursor: pointer;
+  background: #fff;
+  transition: background 0.15s;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+/* 달력: 감정별 색상(해당 날짜에 일기 기록이 있을 때) */
+.cal-happy { background: #fffbe6 !important; color: #d17400 !important; }
+.cal-calm  { background: #e4f9ef !important; color: #218c5b !important; }
+.cal-sad   { background: #e6f2fa !important; color: #156a92 !important; }
+.cal-angry { background: #ffe3e3 !important; color: #d12b3a !important; }
+
+/* 달력 셀 마우스 오버 효과 */
+#calendar td:hover {
+  background: #bde0fe;
+}
+
+/* 달력 상세 일기 영역: 카드 스타일, 폰트 */
+.calendar-entry {
+  margin-top: 15px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: #f8f7fc;
+  font-size: 1.04rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/*----------------------------------------------
+  [8] 감정별 통계 차트 영역(Plotly 차트)
+----------------------------------------------*/
+
+/* 통계 차트 중앙 정렬, 여백 */
+.stats-chart {
+  margin: 0 auto;
+  padding: 18px 0;
+  display: flex;
+  justify-content: center;
+}
+
+/*----------------------------------------------
+  [9] 감정별 전체 테마(배경색 변화, body에 theme- 감정별 클래스)
+----------------------------------------------*/
+.theme-happy  { background: #fffde7; }
+.theme-calm   { background: #e3fcec; }
+.theme-sad    { background: #e9f4fb; }
+.theme-angry  { background: #fff0f0; }

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>TuneMyMood - 감정과 음악으로 가꾸는 나만의 다이어리</title>
+  <!-- 데스크탑 중심의 고정 폭 설정 -->
+  <meta name="viewport" content="width=800">
+  <!-- JS 코드 -->
+  <script src="script.js"></script>
+  <!-- 외부 라이브러리: Plotly(통계 차트용) CDN -->
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <!-- 외부 CSS 파일 연결 -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body onload="init()">
+  <!-- 전체 웹사이트 제목 영역 -->
+  <header>
+    <h1><span class="logo">🎵</span> TuneMyMood</h1>
+  </header>
+
+  <!-- 감정 선택 영역: 감정별 이모지 버튼 -->
+  <section id="emotion-section">
+    <h2>오늘의 감정을 선택해 주세요</h2>
+    <div id="emotion-btns">
+      <button class="emotion-btn" data-emotion="happy">😊 행복</button>
+      <button class="emotion-btn" data-emotion="calm">😌 차분</button>
+      <button class="emotion-btn" data-emotion="sad">😢 슬픔</button>
+      <button class="emotion-btn" data-emotion="angry">😡 화남</button>
+    </div>
+    <!-- 감정에 따라 위로 문구가 자동 표시되는 영역 -->
+    <div id="encouragement" class="encouragement"></div>
+  </section>
+
+  <!-- 음악 추천 영역 -->
+  <section id="music-section">
+    <h2>감정에 어울리는 음악 추천</h2>
+    <!-- 추천/등록된 음악 카드들이 표시될 영역 -->
+    <div id="music-list" class="music-list"></div>
+    <!-- 사용자가 직접 음악을 등록하는 폼 -->
+    <form id="music-form">
+      <h3>내 음악 추가</h3>
+      <!-- required: 값을 입력하지 않고 제출하면 브라우저가 자동으로 경고문을 띄움 -->
+      <input type="text" id="music-title" placeholder="곡명" required>
+      <input type="text" id="music-artist" placeholder="아티스트" required>
+      <input type="url" id="music-url" placeholder="YouTube URL" required>
+      <button type="submit">추가</button>
+    </form>
+    <!-- 사용자가 등록한 음악 목록(리스트) -->
+    <ul id="user-music-list" class="user-music-list"></ul>
+  </section>
+
+  <!-- 일기 작성 및 달력 영역 -->
+  <section id="diary-section">
+    <h2>오늘의 감정 일기</h2>
+    <!-- 일기 작성 폼: 날짜/감정/메모 입력 -->
+    <form id="entry-form">
+      <!-- 날짜는 달력 클릭 또는 직접 선택 가능 -->
+      <label>
+        날짜: 
+        <input type="date" id="entry-date">
+      </label>
+      <!-- 현재 감정 -->
+      <span id="entry-emotion" class="tag"></span>
+      <!-- 일기 메모 입력창 -->
+      <textarea id="entry-note" placeholder="오늘 느낀 점, 기억하고 싶은 일기 등을 적어보세요" required></textarea>
+      <button type="submit">저장</button>
+    </form>
+    <!-- 달력과 상세보기 -->
+    <div class="calendar-area">
+      <!-- 현재 월 표기 -->
+      <div id="current-month-year" class="month-label"></div>
+      <!-- 달력이 그려질 자리 -->
+      <div id="calendar"></div>
+      <!-- 달력에서 날짜 클릭 시 해당 일기 상세 표시 -->
+      <div id="calendar-entry" class="calendar-entry"></div>
+    </div>
+  </section>
+
+  <!-- 감정별 통계 차트 영역 -->
+  <section id="stats-section">
+    <h2>이번 달 감정 통계</h2>
+    <!-- Plotly 차트가 표시될 자리 -->
+    <div id="stats-chart" class="stats-chart"></div>
+  </section>
+</body>
+</html>
