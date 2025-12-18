@@ -13,15 +13,12 @@ import {
   View,
 } from "react-native";
 
-// ✅ 데이터 및 Context
 import { SOUND_LIST, type SoundId } from "../../src/data/sound";
 import { usePreset } from "../../src/context/PresetContext";
 import { useTimer } from "../../src/context/TimerContext";
 
-// 소리 상태 타입 정의
 type SoundState = Record<SoundId, { isOn: boolean; volume: number }>;
 
-// 초기 상태(모두 꺼짐) 생성 함수
 function makeInitialState(): SoundState {
   const init = {} as SoundState;
   for (const s of SOUND_LIST)
@@ -30,17 +27,17 @@ function makeInitialState(): SoundState {
 }
 
 export default function MixerScreen() {
-  // 1. 상태 관리
+  // 1. UI 상태 (믹스 이름, 사운드별 상태, 저장 모달 표시 여부) 관리
   const [mixName, setMixName] = useState("Temporary Mix");
   const [state, setState] = useState<SoundState>(() => makeInitialState());
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveName, setSaveName] = useState("");
 
-  // 2. Context 가져오기
+  // 2. Context (타이머 정보 및 프리셋 기능) 가져오기
   const { remainingSeconds, isRunning } = useTimer();
   const { addPreset, pendingPreset, clearPendingPreset } = usePreset();
 
-  // 3. 오디오 객체 관리 Refs
+  // 3. 오디오 객체 관리 (Refs)
   const soundRefs = useRef<Record<SoundId, Audio.Sound | null>>({
     rain: null,
     fire: null,
@@ -50,28 +47,28 @@ export default function MixerScreen() {
     pencil: null,
   });
 
-  // 4. 활성화된 사운드 목록 계산
   const activeIds = useMemo(
     () => (Object.keys(state) as SoundId[]).filter((id) => state[id].isOn),
     [state]
   );
 
-  // 개별 소리 끄기 (메모리 해제)
+  // 4. 오디오 제어 헬퍼 함수
+  // 개별 사운드 메모리 해제 (Stop & Unload)
   const unloadOne = useCallback(async (id: SoundId) => {
     const s = soundRefs.current[id];
     if (!s) return;
 
     try {
-      await s.stopAsync();
+      await s.stopAsync(); // 재생 중지
     } catch {}
     try {
-      await s.unloadAsync();
+      await s.unloadAsync(); // 메모리 해제
     } catch {}
 
     soundRefs.current[id] = null;
   }, []);
 
-  // 모든 소리 끄기
+  // 모든 사운드 끄기 (초기화)
   const turnOffAll = useCallback(async () => {
     const ids = Object.keys(soundRefs.current) as SoundId[];
     for (const id of ids) await unloadOne(id);
@@ -85,12 +82,12 @@ export default function MixerScreen() {
     });
   }, [unloadOne]);
 
-  // ✅ [NEW] 🎲 랜덤 믹스 기능
+  // 5. 랜덤 믹스 (Random Mix)
   const onRandomMix = useCallback(async () => {
-    // 1. 기존 소리 끄기
+    // (1) 기존 재생 중인 소리 초기화
     await turnOffAll();
 
-    // 2. 소리 목록 섞어서 2~3개 뽑기
+    // (2) 사운드 리스트 셔플링 후 2~3개 무작위 선택
     const count = Math.floor(Math.random() * 2) + 2; // 2 or 3
     const shuffled = [...SOUND_LIST].sort(() => 0.5 - Math.random());
     const selected = shuffled.slice(0, count);
@@ -98,7 +95,7 @@ export default function MixerScreen() {
     const nextState = makeInitialState();
     setMixName("🎲 Random Mix");
 
-    // 3. 선택된 소리 재생
+    // (3) 선택된 사운드 재생
     for (const s of selected) {
       // 볼륨 랜덤 설정 (0.3 ~ 0.8)
       const randomVol = Number((Math.random() * 0.5 + 0.3).toFixed(1));
@@ -106,7 +103,7 @@ export default function MixerScreen() {
       try {
         const { sound } = await Audio.Sound.createAsync(s.asset, {
           shouldPlay: true,
-          isLooping: true,
+          isLooping: true, // 반복 재생 설정
           volume: randomVol,
         });
         soundRefs.current[s.id] = sound;
@@ -118,13 +115,13 @@ export default function MixerScreen() {
     setState(nextState);
   }, [turnOffAll]);
 
-  // 5. 타이머 Fade Out & 종료 감지
+  // 6. 타이머 Fade Out & 종료 감지
   const wasRunningRef = useRef(false);
 
   useEffect(() => {
-    // (1) Fade Out 효과: 남은 시간이 10초 이하일 때 볼륨을 서서히 줄임
+    // (1) Fade Out 로직: 남은 시간이 5초 이하일 때 볼륨을 서서히 줄임
     if (isRunning && remainingSeconds <= 5 && remainingSeconds > 0) {
-      const ratio = remainingSeconds / 5; // 10초일 때 100%, 5초일 때 50%...
+      const ratio = remainingSeconds / 5;
 
       activeIds.forEach((id) => {
         const s = soundRefs.current[id];
@@ -136,7 +133,7 @@ export default function MixerScreen() {
       });
     }
 
-    // (2) 종료 감지: 시간이 다 되면 소리 끄기
+    // (2) 종료 감지: 타이머가 실행 중이었다가 0초가 되면 모든 소리 종료
     if (wasRunningRef.current && !isRunning && remainingSeconds === 0) {
       if (activeIds.length > 0) {
         void turnOffAll();
@@ -145,14 +142,14 @@ export default function MixerScreen() {
     wasRunningRef.current = isRunning;
   }, [remainingSeconds, isRunning, activeIds, state, turnOffAll]);
 
-  // 6. 프리셋 적용 감지 (Presets 탭에서 넘어온 데이터 처리)
+  // 7. 프리셋 적용 (Presets 탭 -> Mixer 탭 데이터 연동)
   useEffect(() => {
-    if (!pendingPreset) return;
+    if (!pendingPreset) return; // 대기 중인 프리셋이 없으면 무시
 
     (async () => {
-      await turnOffAll();
+      await turnOffAll(); // 기존 소리 끄기
 
-      setState((prev) => {
+      setState((prev) => { // 상태 업데이트 (UI 반영)
         const next: SoundState = { ...prev };
         for (const id of Object.keys(next) as SoundId[]) {
           next[id] = { ...next[id], isOn: false };
@@ -169,7 +166,7 @@ export default function MixerScreen() {
 
       setMixName(pendingPreset.name);
 
-      for (const item of pendingPreset.items) {
+      for (const item of pendingPreset.items) { // 실제 오디오 재생
         const meta = SOUND_LIST.find((x) => x.id === item.soundId);
         if (!meta) continue;
         try {
@@ -186,19 +183,19 @@ export default function MixerScreen() {
     })();
   }, [pendingPreset, turnOffAll, clearPendingPreset]);
 
-  // 7. 소리 토글 핸들러
-  const toggleSound = useCallback(
+  // 8. 사용자 인터랙션 핸들러 (Toggle, Volume, Save)
+  const toggleSound = useCallback(  // 사운드 토글 (ON/OFF)
     async (id: SoundId) => {
       const isOn = state[id].isOn;
 
-      if (isOn) {
+      if (isOn) { // 이미 켜져 있으면 끄기
         await unloadOne(id);
         setState((prev) => ({ ...prev, [id]: { ...prev[id], isOn: false } }));
         return;
       }
 
       const meta = SOUND_LIST.find((x) => x.id === id);
-      if (!meta) return;
+      if (!meta) return;  // 꺼져 있으면 켜기
 
       try {
         const { sound } = await Audio.Sound.createAsync(meta.asset, {
@@ -215,7 +212,7 @@ export default function MixerScreen() {
     [state, unloadOne]
   );
 
-  // 볼륨 조절 핸들러
+  // 슬라이더 볼륨 조절
   const setVolume = useCallback(async (id: SoundId, volume: number) => {
     setState((prev) => ({ ...prev, [id]: { ...prev[id], volume } }));
 
@@ -240,14 +237,14 @@ export default function MixerScreen() {
     })();
   }, []);
 
-  // 화면 나갈 때 정리
+  // 화면을 벗어날 때 소리 정리
   useEffect(() => {
     return () => {
       void turnOffAll();
     };
   }, [turnOffAll]);
 
-  // 저장 버튼 핸들러
+  // 저장 버튼 클릭 시 (유효성 검사)
   const onPressSave = useCallback(() => {
     if (activeIds.length === 0) {
       Alert.alert("저장 불가", "최소 1개 이상의 사운드를 켜 주세요.");
@@ -293,7 +290,7 @@ export default function MixerScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
-        {/* 사운드 그리드 */}
+        {/* 사운드 아이콘 그리드 (3열 배치) */}
         <View style={styles.grid}>
           {SOUND_LIST.map((s) => {
             const on = state[s.id].isOn;
@@ -313,7 +310,7 @@ export default function MixerScreen() {
           })}
         </View>
 
-        {/* 볼륨 패널 */}
+        {/* 볼륨 조절 패널 (활성화된 사운드만 표시) */}
         <View style={styles.panel}>
           <Text style={styles.panelTitle}>볼륨 조절</Text>
           {activeIds.length === 0 ? (
@@ -336,7 +333,7 @@ export default function MixerScreen() {
           )}
         </View>
 
-        {/* ✅ 하단 버튼 영역 (3개 버튼: OFF / RANDOM / SAVE) */}
+        {/* 하단 액션 버튼 (OFF / RANDOM / SAVE) */}
         <View style={styles.actions}>
           <Pressable
             onPress={() => void turnOffAll()}
@@ -345,7 +342,6 @@ export default function MixerScreen() {
             <Text style={styles.btnGhostText}>OFF</Text>
           </Pressable>
 
-          {/* 랜덤 버튼 (강조됨) */}
           <Pressable
             onPress={onRandomMix}
             style={[styles.btn, styles.btnRandom]}
@@ -362,7 +358,7 @@ export default function MixerScreen() {
         </View>
       </ScrollView>
 
-      {/* 저장 모달 */}
+      {/* 프리셋 저장 모달 */}
       <Modal visible={saveOpen} transparent animationType="fade">
         <View style={styles.modalBack}>
           <View style={styles.modalCard}>
@@ -397,7 +393,6 @@ export default function MixerScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#0f2d4a" },
 
-  // 헤더 (다른 탭과 높이 통일)
   header: { paddingTop: 56, paddingBottom: 14, paddingHorizontal: 18 },
   headerTitleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   headerAppIconWrap: {
@@ -468,7 +463,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
 
-  // ✅ 버튼 스타일 (3개 배치 최적화)
   actions: { flexDirection: "row", marginTop: 14, gap: 10 },
   btn: {
     flex: 1,
@@ -478,15 +472,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  // OFF / 취소 버튼
   btnGhost: { backgroundColor: "rgba(255,255,255,0.25)" },
   btnGhostText: { color: "white", fontWeight: "800" },
 
-  // SAVE 버튼
   btnPrimary: { backgroundColor: "rgba(255,255,255,0.95)" },
   btnPrimaryText: { color: "#0b2034", fontWeight: "900" },
 
-  // ✅ [NEW] RANDOM 버튼 (약간 푸른빛으로 포인트)
   btnRandom: {
     backgroundColor: "#e6f0ff",
     borderWidth: 2,

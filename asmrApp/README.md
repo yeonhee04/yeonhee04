@@ -2,7 +2,7 @@
 
 > **"나만의 소리 공간을 디자인하다: 빗소리, 모닥불 등 백색 소음을 조합하여 집중과 휴식을 돕는 힐링 앱"**
 
-Healing Mixer는 사용자가 다양한 백색 소음(ASMR)을 직접 선택하고 볼륨을 조절하여 자신만의 **'사운드스페이스'**를 만들 수 있는 모바일 애플리케이션입니다. React Native(Expo)를 기반으로 제작되었으며, 끊김 없는 루프 재생과 섬세한 수면 타이머 기능을 통해 몰입감 있는 청각 경험을 제공합니다.
+Healing Mixer는 사용자가 다양한 백색 소음(ASMR)을 직접 선택하고 볼륨을 조절하여 자신만의 '사운드스페이스'를 만들 수 있는 모바일 애플리케이션입니다. React Native(Expo)를 기반으로 제작되었으며, 끊김 없는 루프 재생과 섬세한 수면 타이머 기능을 통해 몰입감 있는 청각 경험을 제공합니다.
 
 ## 🛠 Tech Stack
 
@@ -39,7 +39,7 @@ Healing Mixer는 사용자가 다양한 백색 소음(ASMR)을 직접 선택하�
 ### UX 중심의 Fade-out 알고리즘
 단순히 소리를 끄는 `setTimeout` 대신, 남은 시간이 5초 미만일 때 매초 볼륨을 `originalVolume * (remainingTime / 5)` 비율로 재계산하여 적용함으로써 부드러운 청각적 종료 경험을 구현했습니다.
 
-### 🔄 전역 상태 관리 (Context API)
+### 전역 상태 관리 (Context API)
 타이머 상태와 프리셋 데이터가 믹서 화면(Mixer Tab)과 설정 화면(Settings Tab) 간에 실시간으로 동기화되어야 했습니다. 이를 위해 `TimerContext`와 `PresetContext`를 구축하여 복잡한 Props Drilling 없이 앱 전역에서 상태를 효율적으로 관리했습니다.
 
 ## Installation & Getting Started

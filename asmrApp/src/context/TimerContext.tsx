@@ -9,9 +9,9 @@ import React, {
 interface TimerContextType {
   remainingSeconds: number;
   isRunning: boolean;
-  setTime: (seconds: number) => void; // ✅ [추가] 시간만 설정 (자동시작 X)
-  startTimer: (seconds: number) => void; // 시간 설정 + 바로 시작
-  resumeTimer: () => void; // ✅ [추가] 현재 시간에서 다시 시작
+  setTime: (seconds: number) => void; 
+  startTimer: (seconds: number) => void;
+  resumeTimer: () => void;
   pauseTimer: () => void;
   stopTimer: () => void;
 }
@@ -25,12 +25,14 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (isRunning && remainingSeconds > 0) {
+      // 1초마다 실행되는 인터벌 설정
       const id = setInterval(() => {
         setRemainingSeconds((prev) => prev - 1);
       }, 1000);
 
       intervalRef.current = id as unknown as number;
     } else if (remainingSeconds === 0) {
+      // 시간이 0이 되면 타이머 종료 및 인터벌 정리
       setIsRunning(false);
       if (intervalRef.current !== null) clearInterval(intervalRef.current);
     }
@@ -39,27 +41,29 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
     };
   }, [isRunning, remainingSeconds]);
 
-  // 기존: 시간 설정 + 시작
+  // 새로운 시간을 설정하고 타이머를 즉시 시작
   const startTimer = (seconds: number) => {
     setRemainingSeconds(seconds);
     setIsRunning(true);
   };
 
-  // ✅ [추가] 시간만 설정하고 시작은 안 함
+  // 시간만 설정하고 타이머는 정지 상태로 둠 (초기 세팅용)
   const setTime = (seconds: number) => {
     setRemainingSeconds(seconds);
     setIsRunning(false);
   };
 
-  // ✅ [추가] 멈춘 상태에서 다시 시작
+  // 멈춰있던 타이머를 다시 흐르게 함
   const resumeTimer = () => {
     if (remainingSeconds > 0) {
       setIsRunning(true);
     }
   };
 
+  // 타이머를 일시정지 (남은 시간 유지)
   const pauseTimer = () => setIsRunning(false);
 
+  // 타이머를 완전히 정지하고 시간을 0으로 초기화
   const stopTimer = () => {
     setIsRunning(false);
     setRemainingSeconds(0);

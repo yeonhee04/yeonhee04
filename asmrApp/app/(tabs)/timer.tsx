@@ -3,12 +3,13 @@ import { Pressable, StyleSheet, Text, View } from "react-native";
 import { useTimer } from "../../src/context/TimerContext";
 
 const PRESETS = [
-  { label: "10s", ms: 10_000 },
+  { label: "10s", ms: 10_000 }, // 10초: 데모 및 테스트용
   { label: "15m", ms: 15 * 60 * 1000 },
   { label: "30m", ms: 30 * 60 * 1000 },
   { label: "60m", ms: 60 * 60 * 1000 },
 ] as const;
 
+// 시간 포맷터 함수 (MM:SS)
 function formatMMSS(ms: number) {
   const s = Math.max(0, Math.floor(ms / 1000));
   const mm = String(Math.floor(s / 60)).padStart(2, "0");
@@ -17,9 +18,11 @@ function formatMMSS(ms: number) {
 }
 
 export default function TimerScreen() {
+  // 1. TimerContext에서 상태와 제어 함수 가져오기
   const { remainingSeconds, isRunning, setTime, resumeTimer, pauseTimer, stopTimer } =
     useTimer();
 
+  // 2. 프리셋 선택 핸들러
   const onSelectPreset = useCallback(
     (ms: number) => {
       setTime(ms / 1000);
@@ -27,6 +30,7 @@ export default function TimerScreen() {
     [setTime]
   );
 
+  // 3. 시작/일시정지 토글 핸들러
   const onToggle = useCallback(() => {
     if (isRunning) {
       pauseTimer();
@@ -37,16 +41,19 @@ export default function TimerScreen() {
     }
   }, [isRunning, remainingSeconds, pauseTimer, resumeTimer]);
 
+  // 4. 정지 핸들러 (시간 초기화)
   const onStop = useCallback(() => {
     stopTimer();
   }, [stopTimer]);
 
   return (
     <View style={styles.root}>
+      {/* 헤더 영역 */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Sleep Timer</Text>
       </View>
 
+      {/* 중앙 타이머 디스플레이 */}
       <View style={styles.center}>
         <Text style={styles.time}>{formatMMSS(remainingSeconds * 1000)}</Text>
 
@@ -73,6 +80,7 @@ export default function TimerScreen() {
         </Text>
       </View>
 
+      {/* 프리셋 선택 카드 */}
       <View style={styles.presetsCard}>
         <Text style={styles.sectionTitle}>Preset</Text>
 

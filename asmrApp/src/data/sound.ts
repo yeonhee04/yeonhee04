@@ -4,7 +4,7 @@ export type SoundItem = {
   id: SoundId;
   title: string;
   asset: any;
-  icon: any;          // ✅ 추가
+  icon: any;          
   defaultVolume: number;
 };
 
